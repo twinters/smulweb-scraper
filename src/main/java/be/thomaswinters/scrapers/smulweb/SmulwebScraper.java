@@ -10,14 +10,13 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SmulwebScraper implements ISmulwebScraper {
 
     private static URL CONTEXT_URL;
+    private List<String> prohibitedSmulwebWords = Collections.singletonList("special");
 
     static {
         try {
@@ -77,8 +76,11 @@ public class SmulwebScraper implements ISmulwebScraper {
 
 
     @Override
-    public List<SmulwebRecipeCard> search(String s, int pageNr) throws IOException {
-        return scrapeSearchResult(createSearchUrl(s, pageNr));
+    public List<SmulwebRecipeCard> search(String searchWord, int pageNr) throws IOException {
+        if (prohibitedSmulwebWords.stream().anyMatch(e->searchWord.toLowerCase().contains(e))) {
+            return new ArrayList<>();
+        }
+        return scrapeSearchResult(createSearchUrl(searchWord, pageNr));
     }
 
     @Override
