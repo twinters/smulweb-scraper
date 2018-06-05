@@ -15,7 +15,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-public class SmulwebScraper {
+public class SmulwebScraper implements ISmulwebScraper {
 
     private static URL CONTEXT_URL;
 
@@ -76,10 +76,12 @@ public class SmulwebScraper {
     }
 
 
+    @Override
     public List<SmulwebRecipeCard> search(String s, int pageNr) throws IOException {
         return scrapeSearchResult(createSearchUrl(s, pageNr));
     }
 
+    @Override
     public List<SmulwebRecipeCard> search(String s) throws IOException {
         return search(s, 0);
     }
@@ -90,6 +92,7 @@ public class SmulwebScraper {
         return createSearchUrl("", random.nextInt(MAX_SEARCH_PAGE));
     }
 
+    @Override
     public List<String> scrapeSomeTitles() throws IOException {
         String page = generateRandomSearchPage();
         return scrapeSearchResult(page)
