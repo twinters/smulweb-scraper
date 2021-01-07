@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 public class SmulwebScraper implements ISmulwebScraper {
 
     private static URL CONTEXT_URL;
-    private List<String> prohibitedSmulwebWords = Collections.singletonList("special");
+    private final List<String> prohibitedSmulwebWords = Collections.singletonList("special");
 
     static {
         try {
@@ -46,38 +46,56 @@ public class SmulwebScraper implements ISmulwebScraper {
         if (resp.statusCode() == 200) {
             Document doc = conn.get();
 
-            Elements titleElements = doc.select("h2");
-            return titleElements.stream()
-                    .flatMap(e -> e.children()
-                            .stream()
-                            .map(this::scrapeSearchResult)
-                            .filter(Optional::isPresent)
-                            .map(Optional::get))
+            Elements articles = doc.select("article");
+            return articles.stream()
+                    .map(this::scrapeSearchResult)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
                     .collect(Collectors.toList());
+//            return titleElements.stream()
+//                    .flatMap(e -> e.children()
+//                            .stream()
+//                            .map(this::scrapeSearchResult)
+//                            .filter(Optional::isPresent)
+//                            .map(Optional::get))
+//                    .collect(Collectors.toList());
         }
         throw new RuntimeException("Error connecting Smulweb: " + resp);
     }
 
     private Optional<SmulwebRecipeCard> scrapeSearchResult(Element element) {
-        if (element.tagName().equals("a")) {
-            String title = element.text();
-            String urlString = element.attr("href");
-            URL url = null;
-            try {
-                url = new URL(CONTEXT_URL, urlString);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-            return Optional.of(new SmulwebRecipeCard(title, url));
+//        if (element.tagName().equals("a")) {
+        Element headerLink = element
+                .getElementsByTag("h2").first()
+                .getElementsByTag("a").first();
+        String title = headerLink.text();
+
+        
+        String ingredients = "";
+        Elements ingredientsElements = element
+                .getElementsByClass("ingredienten").first()
+                .getElementsByTag("p");
+        if (ingredientsElements.size() > 0) {
+            ingredients = ingredientsElements.first()
+                    .text();
         }
-        return Optional.empty();
+        String urlString = headerLink.attr("href");
+        URL url = null;
+        try {
+            url = new URL(CONTEXT_URL, urlString);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return Optional.of(new SmulwebRecipeCard(title, ingredients, url));
+//        }
+//        return Optional.empty();
 
     }
 
 
     @Override
     public List<SmulwebRecipeCard> search(String searchWord, int pageNr) throws IOException {
-        if (prohibitedSmulwebWords.stream().anyMatch(e->searchWord.toLowerCase().contains(e))) {
+        if (prohibitedSmulwebWords.stream().anyMatch(e -> searchWord.toLowerCase().contains(e))) {
             return new ArrayList<>();
         }
         return scrapeSearchResult(createSearchUrl(searchWord, pageNr));
@@ -103,5 +121,9 @@ public class SmulwebScraper implements ISmulwebScraper {
                 .collect(Collectors.toList());
     }
     //endregion
+
+    public static void main(String[] args) throws IOException {
+        System.out.println(new SmulwebScraper().search("pizza"));
+    }
 
 }
