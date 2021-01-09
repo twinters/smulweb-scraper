@@ -65,12 +65,19 @@ public class SmulwebScraper implements ISmulwebScraper {
 
     private Optional<SmulwebRecipeCard> scrapeSearchResult(Element element) {
 //        if (element.tagName().equals("a")) {
-        Element headerLink = element
-                .getElementsByTag("h2").first()
-                .getElementsByTag("a").first();
+        Elements headers = element
+                .getElementsByTag("h2");
+        if (headers == null || headers.size() == 0) {
+            return Optional.empty();
+        }
+        Elements headerLinks = headers.first().getElementsByTag("a");
+        if (headerLinks == null || headerLinks.size() == 0) {
+            return Optional.empty();
+        }
+        Element headerLink = headerLinks.first();
         String title = headerLink.text();
 
-        
+
         String ingredients = "";
         Elements ingredientsElements = element
                 .getElementsByClass("ingredienten").first()
